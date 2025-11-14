@@ -22,16 +22,23 @@ api.interceptors.request.use(
   }
 );
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
+let responseInterceptor = null;
+
+export const setupResponseInterceptor = (logout, navigate) => {
+  if (responseInterceptor !== null) {
+    api.interceptors.response.eject(responseInterceptor);
   }
-);
+
+  responseInterceptor = api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        logout();
+        navigate('/login', { replace: true });
+      }
+      return Promise.reject(error);
+    }
+  );
+};
 
 export default api;
